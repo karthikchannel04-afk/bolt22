@@ -231,8 +231,25 @@ function PatientsPage() {
           {[
             { title: 'Total Patients', value: patients.length, icon: User, color: 'from-blue-500 to-cyan-500' },
             { title: 'Active Patients', value: patients.filter(p => p.status === 'active').length, icon: Heart, color: 'from-green-500 to-teal-500' },
-            { title: 'This Week Sessions', value: '18', icon: Calendar, color: 'from-purple-500 to-pink-500' },
-            { title: 'Avg Mood Score', value: '3.8', icon: Star, color: 'from-yellow-500 to-orange-500' }
+            { title: 'This Week Sessions', value: (() => {
+              // Calculate this week's sessions for current therapist
+              const oneWeekAgo = new Date();
+              oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+              const allBookings = JSON.parse(localStorage.getItem('mindcare_bookings') || '[]');
+              const thisWeekSessions = allBookings.filter((booking: any) => 
+                (booking.therapistName === user?.name || booking.therapistId === user?.id) &&
+                booking.status === 'completed' &&
+                new Date(booking.date) >= oneWeekAgo
+              );
+              return thisWeekSessions.length.toString();
+            })(), icon: Calendar, color: 'from-purple-500 to-pink-500' },
+            { title: 'Avg Mood Score', value: (() => {
+              // Calculate average mood score from therapist's patients
+              if (patients.length === 0) return '0';
+              const totalMood = patients.reduce((sum, patient) => sum + patient.currentMood, 0);
+              const avgMood = totalMood / patients.length;
+              return avgMood.toFixed(1);
+            })(), icon: Star, color: 'from-yellow-500 to-orange-500' }
           ].map((stat, index) => (
             <motion.div
               key={index}
